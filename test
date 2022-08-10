@@ -1,0 +1,309 @@
+#!/bin/bash
+
+set -e
+# set -x
+
+n() {
+  $@ &>/dev/null
+}
+
+make_file() {
+  local branch=$(git branch --show-current)
+  touch x/$branch-$1
+  git add x
+  n git commit -m $1
+}
+
+checkout() {
+  n git checkout $1
+}
+
+push() {
+  n git push -f -u testing HEAD
+}
+
+merge() {
+  n git merge $1 -m $2-merge
+}
+
+reset_tests() {
+  checkout master
+  n git branch -D dev feature || true
+  n git push testing --delete dev feature || true
+
+  n git checkout -b dev
+
+  make_file a
+  push
+}
+
+make_feature() {
+  n git branch feature
+  checkout feature
+  push
+  # git branch -u testing/feature
+}
+
+run_test() {
+  local result=$(./get-files-push)
+  if [ -z "$result" ]; then
+    echo -
+  else
+    echo -e "$result"
+  fi
+}
+
+
+
+
+echo
+echo
+
+# =================================
+#
+#     (dev)     --(A)
+#                   \
+#     (feature)      E
+#
+echo 
+echo TEST 1 - feature branch is ahead of dev
+echo x/feature-e
+echo 
+
+reset_tests
+make_feature
+make_file e
+
+echo RESULT 1
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)
+#                   \
+#     (feature)      E
+#
+echo 
+echo TEST 2 - feature branch out of sync with dev
+echo x/feature-e
+echo 
+
+reset_tests
+make_file b
+push
+make_feature
+make_file e
+
+echo RESULT 2
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)
+#                   \   \
+#     (feature)      E--{G}
+#
+echo 
+echo TEST 3 - feature branch is synced with dev
+echo x/feature-e
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+merge dev g
+
+echo RESULT 3
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)
+#                   \   \
+#     (feature)     (E)-{G}
+#
+echo 
+echo TEST 4 - feature branch is synced with dev / no changes
+echo -
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+push
+merge dev g
+
+echo RESULT 4
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)
+#                   \   \
+#     (feature)      E--{G}--H
+#
+echo 
+echo TEST 5 - feature branch is ahead of dev after sync
+echo x/feature-e
+echo x/feature-h
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+merge dev g
+make_file h
+
+echo RESULT 5
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)
+#                   \   \
+#     (feature)     (E)-(G)--H
+#
+echo 
+echo TEST 6 - feature branch is partially remote and ahead of dev after sync
+echo x/feature-h
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+merge dev g
+push
+make_file h
+
+echo RESULT 6
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)
+#                   \
+#     (feature)     (E)--F
+#
+echo 
+echo TEST 7 - feature branch is partially remote
+echo x/feature-f
+echo 
+
+reset_tests
+make_feature
+make_file e
+push
+make_file f
+
+echo RESULT 7
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-----(B)
+#                   \
+#     (feature)     (E)--F
+#
+echo 
+echo TEST 8 - feature branch is partially remote and behind remote dev
+echo x/feature-f
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+push
+make_file f
+
+echo RESULT 8
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-----(B)
+#                   \       \
+#     (feature)     (E)--F--{G}
+#
+echo 
+echo TEST 9 - feature branch is partially remote and synced with remote dev
+echo x/feature-f
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+push
+make_file f
+merge dev g
+
+echo RESULT 9
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-----(B)
+#                   \       \
+#     (feature)     (E)-(F)-(G)--H
+#
+echo 
+echo TEST 10 - feature branch is partially remote after sync
+echo x/feature-h
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+make_file f
+merge dev g
+push
+make_file h
+
+echo RESULT 10
+run_test
+echo
+
+
+
+
+
+
+
+
+
+
+
+echo
+echo
+
+
+n git checkout master
