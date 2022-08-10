@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# Print a list of files for pre-push hook.
+# Keep it fast, as it runs for every lefthook command separately.
+#
+
+#
+# This script should work for following situations:
+#     --A--   commit
+#     -(A)-   commit on remote
+#     -{A}-   merge commit
+#
+#  1. feature branch is ahead of dev
+#
+#     (dev)     ---A
+#                   \
+#     (feature)      E---F---G         <- list files only from E,F,G
+#
+#  2. feature branch out of sync with dev
+#
+#     (dev)     ---A---B---C
+#                   \
+#     (feature)      E---F---G         <- list files only from E,F,G
+#
+#  3. feature branch is synced with dev
+#
+#     (dev)     ---A---B---C
+#                   \       \
+#     (feature)      E---F--{G}        <- list files only from E,F
+#
+#  4. feature branch is ahead of dev after sync
+#
+#     (dev)     ---A---B---C
+#                   \       \
+#     (feature)      E---F--{G}--H     <- list files only from E,F,H
+#
+#  5. feature branch is out of sync with dev after sync
+#
+#     (dev)     ---A---B---C---D
+#                   \       \
+#     (feature)      E---F--{G}--H     <- list files only from E,F,H
+#
+#  6. for each of scenarios above, don't inlude commits which are already on remote
+#
+#     (dev)     --(A)
+#                   \
+#     (feature)     (E)--F---G         <- list files only from F,G
+#
+#
+# When merging `dev` and `feature` with files I-VII, where IV file is changed in both branches,
+# include the shared file in the outcome, while ignoring other files from `dev`.
+# Same applies to comparing `feature` and `origin/feature` (remote).
+#
+#      dev or remote
+#     ┌─────────────┐                     outcome
+#     │  I    III   │                 ┌─────────────┐
+#     │    ┌────────┼────┐            │   IV    V   │
+#     │ II │   IV   │ V  │     ->     │             │
+#     └────┼────────┘    │            │   VI   VII  │
+#          │   VI   VII  │            └─────────────┘
+#          └─────────────┘
+#              feature
+#
+
+git log --name-only --format="" --no-merges HEAD^..HEAD | sort | uniq
