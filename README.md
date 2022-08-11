@@ -3,7 +3,7 @@ To run:
 - clone and checkout to repo
 - create local remote
   ```bash
-  mkdir ../git-diff-remote.git
+  git init --bare ../git-diff-remote.git
   git remote add testing ../git-diff-remote.git
   ```
 - run `./test`
