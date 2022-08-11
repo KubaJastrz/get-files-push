@@ -9,6 +9,14 @@ function _xargs() {
   fi
 }
 
+function _comm() {
+  if [[ $OSTYPE == 'darwin'* ]]; then
+    comm $@
+  else 
+    comm --nocheck-order $@
+  fi
+}
+
 full_diff=$(git diff --name-only HEAD @{push} || git diff --name-only HEAD dev)
 
 merge_diff=$(git log --merges --first-parent --format='%H' | _xargs git show --first-parent --name-only --format='')
@@ -16,6 +24,6 @@ merge_diff=$(git log --merges --first-parent --format='%H' | _xargs git show --f
 if [ -z "$merge_diff" ]; then
   printf '%s\n' "$full_diff"
 else
-  difference=$(comm --nocheck-order -23 <(printf "%s\n" "${full_diff[@]}" | sort) <(printf "%s\n" "${merge_diff[@]}" | sort))
+  difference=$(_comm -23 <(printf "%s\n" "${full_diff[@]}" | sort) <(printf "%s\n" "${merge_diff[@]}" | sort))
   printf '%s\n' "$difference" | awk '{$1=$1};1'
 fi
