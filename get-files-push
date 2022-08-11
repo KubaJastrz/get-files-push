@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Attributions:
-# - how to detect if force-push is needed  https://stackoverflow.com/a/9753364/6244924
+# - how to detect if force-push is needed  https://stackoverflow.com/a/12258773/6244924
 # - how to ignore xargs with empty stdout  https://stackoverflow.com/a/8296746/6244924
 # - how to list only merge commits  https://stackoverflow.com/a/25986615/6244924
 # - how to detect "base branch"  https://stackoverflow.com/a/17843908/6244924
