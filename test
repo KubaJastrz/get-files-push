@@ -55,6 +55,12 @@ run_test() {
 
 
 
+#
+# --A--  commit
+# -{A}-  merge commit
+# -(A)-  commit on remote
+#
+
 
 echo
 echo
