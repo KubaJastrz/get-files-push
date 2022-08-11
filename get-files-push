@@ -30,7 +30,8 @@ function _comm() {
 
 # Detect if remote contains different commits than HEAD (ie. force push needed)
 if [ ! -z "$(git rev-list $(git rev-parse @{upstream}) ^$(git rev-parse HEAD))" ]; then
-  base_branch=$(git show-branch \
+  # If force push is needed, we can't compare local changes against upstream, as it is out of sync
+  base_rev=$(git show-branch \
     | sed "s/].*//" \
     | grep "\*" \
     | grep -v "$(git branch --show-current)" \
@@ -39,17 +40,22 @@ if [ ! -z "$(git rev-list $(git rev-parse @{upstream}) ^$(git rev-parse HEAD))" 
     | sed 's/[\\^~].*//'
   )
 else
-  base_branch='@{push}'
+  base_rev='@{upstream}'
 fi
 
-full_diff=$(git diff --name-only $base_branch..HEAD | sort)
+full_diff=$(git diff --name-only $base_rev..HEAD | sort)
 
-# List of files in the merge commits *only*
-merge_diff=$(git log --merges --first-parent --format='%H' | _xargs git show --first-parent --name-only --format='' | sort | uniq)
+# Query commit hash for merge commits and convert them into changed files
+merge_diff=$(git log --merges --first-parent --format='%H' \
+  | _xargs git show --first-parent --name-only --format='' \
+  | sort \
+  | uniq
+)
 
 if [ -z "$merge_diff" ]; then
   printf '%s\n' "$full_diff"
 else
+  # Filter out files actually changed in the working branch, excluding merge commits
   difference=$(_comm -23 <(printf "%s\n" "${full_diff[@]}" | sort) <(printf "%s\n" "${merge_diff[@]}"))
   printf '%s\n' "$difference" | awk '{$1=$1};1'
 fi
