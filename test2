@@ -1,0 +1,115 @@
+#!/bin/bash
+
+set -e
+# set -x
+
+n() {
+  $@ &>/dev/null
+}
+
+make_file() {
+  local branch=$(git branch --show-current)
+  touch x/$branch-$1
+  git add x
+  n git commit -m $1
+}
+
+checkout() {
+  n git checkout $1
+}
+
+push() {
+  n git push -f -u testing HEAD
+}
+
+merge() {
+  n git merge $1 -m $2-merge
+}
+
+reset_tests() {
+  checkout master
+  n git branch -D dev feature old || true
+  n git push testing --delete dev feature old || true
+
+  n git checkout -b dev
+
+  make_file a
+  push
+}
+
+make_old() {
+  make_file b
+  n git checkout HEAD~1
+  n git branch old
+  checkout old
+  make_file z
+  checkout dev
+  merge old c
+  push
+}
+
+make_feature() {
+  n git branch feature
+  checkout feature
+  push
+  # git branch -u testing/feature
+}
+
+run_test() {
+  local result=$(./get-files-push)
+  if [ -z "$result" ]; then
+    echo -
+  else
+    echo -e "$result"
+  fi
+}
+
+
+
+#
+# --A--  commit
+# -{A}-  merge commit
+# -(A)-  commit on remote
+#
+
+
+echo
+echo
+
+
+
+# =================================
+#
+#     (dev)     --(A)-(B)          --(A)-(B)
+#                   \        ->            \
+#     (feature)     (E)                     E
+#
+echo 
+echo TEST 16 - feature branch is out of sync with remote
+echo x/feature-e
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+push
+n git rebase dev
+
+echo RESULT 16
+run_test
+echo
+
+
+
+
+
+
+
+echo
+echo
+
+
+# n git checkout master

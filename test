@@ -28,12 +28,23 @@ merge() {
 
 reset_tests() {
   checkout master
-  n git branch -D dev feature || true
-  n git push testing --delete dev feature || true
+  n git branch -D dev feature old || true
+  n git push testing --delete dev feature old || true
 
   n git checkout -b dev
 
   make_file a
+  push
+}
+
+make_old() {
+  make_file b
+  n git checkout HEAD~1
+  n git branch old
+  checkout old
+  make_file z
+  checkout dev
+  merge old c
   push
 }
 
@@ -295,6 +306,155 @@ push
 make_file h
 
 echo RESULT 10
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)
+#                   \   \
+#     (feature)      E--{G}
+#
+echo 
+echo TEST 11 - feature branch contains files from dev
+echo x/feature-e
+echo x/shared
+echo 
+
+reset_tests
+touch x/shared
+git add x
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+touch x/shared
+git add x
+make_file e
+merge dev g
+
+echo RESULT 11
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)-(C)
+#                   \     / \
+#     (feature)      \   /   E
+#                     \ /
+#     (old)            Z
+#
+echo 
+echo TEST 12 - feature branch is created from dev with merges
+echo x/feature-e
+echo 
+
+reset_tests
+make_old
+make_feature
+make_file e
+
+echo RESULT 12
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)-(C)-(D)
+#                   \     / \
+#     (feature)      \   /   E
+#                     \ /
+#     (old)            Z
+#
+echo 
+echo TEST 13 - feature branch is created from dev with merges and behind dev
+echo x/feature-e
+echo 
+
+reset_tests
+make_old
+make_file c
+make_file d
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+
+echo RESULT 13
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)-(C)-(D)
+#                   \     / \   \
+#     (feature)      \   /   E--{G}
+#                     \ /
+#     (old)            Z
+#
+echo 
+echo TEST 14 - feature branch is created from dev with merges and synced with dev
+echo x/feature-e
+echo 
+
+reset_tests
+make_old
+make_file c
+make_file d
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+merge dev g
+
+echo RESULT 14
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)              --(A)
+#                   \        ->        \
+#     (feature)     (E)                 F
+#
+echo 
+echo TEST 15 - feature branch is out of sync with remote
+echo x/feature-f
+echo 
+
+reset_tests
+make_feature
+make_file e
+push
+n git reset --hard HEAD~1
+make_file f
+
+echo RESULT 15
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)          --(A)-(B)
+#                   \        ->            \
+#     (feature)     (E)                     E
+#
+echo 
+echo TEST 16 - feature branch is out of sync with remote
+echo x/feature-e
+echo 
+
+reset_tests
+make_file b
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+push
+n git rebase dev
+
+echo RESULT 16
 run_test
 echo
 

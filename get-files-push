@@ -1,6 +1,16 @@
 #!/bin/bash
+#
+# Attributions:
+# - how to detect if force-push is needed  https://stackoverflow.com/a/9753364/6244924
+# - how to ignore xargs with empty stdout  https://stackoverflow.com/a/8296746/6244924
+# - how to list only merge commits  https://stackoverflow.com/a/25986615/6244924
+# - how to detect "base branch"  https://stackoverflow.com/a/17843908/6244924
+# - how to create local git remote  https://stackoverflow.com/a/34507038/6244924
+# - how to detect empty value in shell  https://serverfault.com/a/382740
+# - how to trim whitespace for each line  https://unix.stackexchange.com/a/205854
+#
 
-# https://stackoverflow.com/a/8296746/6244924
+# We need xargs to run only if sdout is not empty
 function _xargs() {
   if [[ $OSTYPE == 'darwin'* ]]; then
     xargs $@
@@ -9,6 +19,7 @@ function _xargs() {
   fi
 }
 
+# We want to optimize comm, as inputs are already sorted
 function _comm() {
   if [[ $OSTYPE == 'darwin'* ]]; then
     comm $@
@@ -17,13 +28,28 @@ function _comm() {
   fi
 }
 
-full_diff=$(git diff --name-only HEAD @{push} || git diff --name-only HEAD dev)
+# Detect if remote contains different commits than HEAD (ie. force push needed)
+if [ ! -z "$(git rev-list $(git rev-parse @{upstream}) ^$(git rev-parse HEAD))" ]; then
+  base_branch=$(git show-branch \
+    | sed "s/].*//" \
+    | grep "\*" \
+    | grep -v "$(git branch --show-current)" \
+    | head -n1 \
+    | sed "s/^.*\[//" \
+    | sed 's/[\\^~].*//'
+  )
+else
+  base_branch='@{push}'
+fi
 
-merge_diff=$(git log --merges --first-parent --format='%H' | _xargs git show --first-parent --name-only --format='')
+full_diff=$(git diff --name-only $base_branch..HEAD | sort)
+
+# List of files in the merge commits *only*
+merge_diff=$(git log --merges --first-parent --format='%H' | _xargs git show --first-parent --name-only --format='' | sort | uniq)
 
 if [ -z "$merge_diff" ]; then
   printf '%s\n' "$full_diff"
 else
-  difference=$(_comm -23 <(printf "%s\n" "${full_diff[@]}" | sort) <(printf "%s\n" "${merge_diff[@]}" | sort))
+  difference=$(_comm -23 <(printf "%s\n" "${full_diff[@]}" | sort) <(printf "%s\n" "${merge_diff[@]}"))
   printf '%s\n' "$difference" | awk '{$1=$1};1'
 fi
