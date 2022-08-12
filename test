@@ -19,7 +19,7 @@ checkout() {
 }
 
 push() {
-  n git push -f -u testing HEAD
+  n git push $@ -u testing HEAD
 }
 
 merge() {
@@ -28,13 +28,16 @@ merge() {
 
 reset_tests() {
   checkout master
-  n git branch -D dev feature old || true
+  n git branch -D dev feature fix old || true
   n git push testing --delete dev feature old || true
+  n git push testing --delete feature || true
+  n git push testing --delete fix || true
+  n git push testing --delete old || true
 
   n git checkout -b dev
 
   make_file a
-  push
+  push -f
 }
 
 make_old() {
@@ -51,8 +54,11 @@ make_old() {
 make_feature() {
   n git branch feature
   checkout feature
-  push
-  # git branch -u testing/feature
+}
+
+make_fix() {
+  n git branch fix
+  checkout fix
 }
 
 run_test() {
@@ -374,7 +380,6 @@ echo
 
 reset_tests
 make_old
-make_file c
 make_file d
 push
 n git checkout HEAD~1
@@ -400,7 +405,6 @@ echo
 
 reset_tests
 make_old
-make_file c
 make_file d
 push
 n git checkout HEAD~1
@@ -475,13 +479,142 @@ make_file e
 make_file f
 push
 n git reset --hard HEAD~1
-push
+push -f
 
 echo RESULT 17
 run_test
 echo
 
+# =================================
+#
+#     (dev)     --(A)-(B)-(C)               --(A)-(B)-(C)
+#                   \     / \                   \     / \
+#     (feature)      \   /  (E)       ->         \   /   F
+#                     \ /                         \ /
+#     (old)            Z                           Z
+#
+echo 
+echo TEST 18 - feature branch needs a force push with dev after merge
+echo x/feature-f
+echo 
 
+reset_tests
+make_old
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+push
+n git reset --hard HEAD~1
+make_file f
+
+echo RESULT 18
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)-(C)-(D)           --(A)-(B)-(C)-(D)
+#                   \     / \                   \     / \
+#     (feature)      \   /  (E)       ->         \   /   F
+#                     \ /                         \ /
+#     ~old~            Z                           Z
+#
+echo 
+echo TEST 19 - feature branch needs a force push with dev after merge and deleted old
+echo x/feature-f
+echo 
+
+reset_tests
+make_old
+n git branch -D old
+make_file d
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+push
+n git reset --hard HEAD~1
+make_file f
+
+echo RESULT 19
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)-(B)-(C)-(D)           --(A)-(B)-(C)-(D)
+#                   \     / \                   \     / \
+#     (feature)      \   /  (E)       ->         \   /   F
+#                     \ /                         \ /
+#     (old)            Z                           Z
+#
+echo 
+echo TEST 20 - feature branch needs a force push with dev after merge while behind dev
+echo x/feature-f
+echo 
+
+reset_tests
+make_old
+make_file d
+push
+n git checkout HEAD~1
+make_feature
+make_file e
+push
+n git reset --hard HEAD~1
+make_file f
+
+echo RESULT 20
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)
+#                   \
+#     (feature)      E
+#                     \
+#     (fix)            J
+#
+echo 
+echo TEST 21 - fix branch is based on feature
+echo x/fix-j
+echo 
+
+reset_tests
+make_feature
+make_file e
+make_fix
+make_file j
+
+echo RESULT 21
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)
+#                   \
+#     (feature)     (E)
+#                     \
+#     (fix)            J
+#
+echo 
+echo TEST 21 - fix branch is based on remote feature
+echo x/fix-j
+echo 
+
+reset_tests
+make_feature
+make_file e
+push
+make_fix
+make_file j
+
+echo RESULT 21
+run_test
+echo
 
 
 

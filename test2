@@ -19,7 +19,7 @@ checkout() {
 }
 
 push() {
-  n git push -f -u testing HEAD
+  n git push $@ -u testing HEAD
 }
 
 merge() {
@@ -30,11 +30,13 @@ reset_tests() {
   checkout master
   n git branch -D dev feature old || true
   n git push testing --delete dev feature old || true
+  n git push testing --delete feature || true
+  n git push testing --delete old || true
 
   n git checkout -b dev
 
   make_file a
-  push
+  push -f
 }
 
 make_old() {
@@ -51,8 +53,6 @@ make_old() {
 make_feature() {
   n git branch feature
   checkout feature
-  push
-  # git branch -u testing/feature
 }
 
 run_test() {
@@ -80,34 +80,30 @@ echo
 
 # =================================
 #
-#     (dev)     --(A)-(B)-(C)-(D)
-#                   \     / \   \
-#     (feature)      \   /   E--{G}
-#                     \ /
-#     (old)            Z
+#     (dev)     --(A)-(B)-(C)               --(A)-(B)-(C)
+#                   \     / \                   \     / \
+#     (feature)      \   /  (E)       ->         \   /   F
+#                     \ /                         \ /
+#     (old)            Z                           Z
 #
 echo 
-echo TEST 14 - feature branch is created from dev with merges and synced with dev
-echo x/feature-e
+echo TEST 18 - feature branch needs a force push with dev after merge
+echo x/feature-f
 echo 
 
 reset_tests
 make_old
-make_file c
-make_file d
 push
 n git checkout HEAD~1
 make_feature
 make_file e
-merge dev g
+push
+n git reset --hard HEAD~1
+make_file f
 
-echo RESULT 14
+echo RESULT 18
 run_test
 echo
-
-
-
-
 
 
 
