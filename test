@@ -414,34 +414,12 @@ echo
 
 # =================================
 #
-#     (dev)     --(A)              --(A)
-#                   \        ->        \
-#     (feature)     (E)                 F
-#
-echo 
-echo TEST 15 - feature branch is out of sync with remote
-echo x/feature-f
-echo 
-
-reset_tests
-make_feature
-make_file e
-push
-n git reset --hard HEAD~1
-make_file f
-
-echo RESULT 15
-run_test
-echo
-
-# =================================
-#
 #     (dev)     --(A)-(B)          --(A)-(B)
 #                   \        ->            \
 #     (feature)     (E)                     E
 #
 echo 
-echo TEST 16 - feature branch is out of sync with remote
+echo TEST 15 - feature branch is out of sync with remote
 echo x/feature-e
 echo 
 
@@ -454,11 +432,54 @@ make_file e
 push
 n git rebase dev
 
+echo RESULT 15
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)              --(A)
+#                   \        ->        \
+#     (feature)     (E)                 F
+#
+echo 
+echo TEST 16 - feature branch is out of sync with remote with different changes
+echo x/feature-f
+echo 
+
+reset_tests
+make_feature
+make_file e
+push
+n git reset --hard HEAD~1
+make_file f
+
 echo RESULT 16
 run_test
 echo
 
+# =================================
+#
+#     (dev)     --(A)                 --(A)
+#                   \           ->        \
+#     (feature)     (E)-(F)               (E)
+#
+echo 
+echo TEST 17 - feature branch has removed commit from remote
+echo -
+echo 
 
+reset_tests
+make_feature
+make_file e
+make_file f
+push
+n git reset --hard HEAD~1
+push
+
+echo RESULT 17
+run_test
+echo
 
 
 
