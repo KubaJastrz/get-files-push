@@ -80,25 +80,28 @@ echo
 
 # =================================
 #
-#     (dev)     --(A)-(B)          --(A)-(B)
-#                   \        ->            \
-#     (feature)     (E)                     E
+#     (dev)     --(A)-(B)-(C)-(D)
+#                   \     / \   \
+#     (feature)      \   /   E--{G}
+#                     \ /
+#     (old)            Z
 #
 echo 
-echo TEST 16 - feature branch is out of sync with remote
+echo TEST 14 - feature branch is created from dev with merges and synced with dev
 echo x/feature-e
 echo 
 
 reset_tests
-make_file b
+make_old
+make_file c
+make_file d
 push
 n git checkout HEAD~1
 make_feature
 make_file e
-push
-n git rebase dev
+merge dev g
 
-echo RESULT 16
+echo RESULT 14
 run_test
 echo
 

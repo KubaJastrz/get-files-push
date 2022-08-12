@@ -19,19 +19,6 @@ function _xargs() {
   fi
 }
 
-# We want to optimize comm, as inputs are already sorted
-function _comm() {
-  if [[ $OSTYPE == 'darwin'* ]]; then
-    comm $@
-  else 
-    comm --nocheck-order $@
-  fi
-}
-
-function print_files() {
-  printf '%s\n' "$1"
-}
-
 # Checks if force-push is needed by comparing upstream and HEAD.
 # If true, prints a list of commits present in upstream but missing in local branch.
 # Otherwise, prints nothing.
@@ -44,47 +31,27 @@ function detect_force_push() {
   git rev-list $upstream_commit ^$local_commit
 }
 
-function get_local_branch_diff() {
-  # Use remote version of branch by default. This way we can compare local branch against latest
-  # pushed changes.
-  local base_revision='@{upstream}'
 
-  if [ ! -z $(detect_force_push) ]; then
-    # If force push is needed, we can't compare local changes against upstream as it is out of sync.
-    # In that case, let's guess what was the base for local branch. Force push is needed mostly 
-    # after rebase to the base branch, so we can assume that the both branches are synced with each 
-    # other and the diff will yield the minimum number of files changed.
-    base_revision=$(git show-branch \
-      | sed "s/].*//" \
-      | grep "\*" \
-      | grep -v "$(git branch --show-current)" \
-      | head -n1 \
-      | sed "s/^.*\[//" \
-      | sed 's/[\\^~].*//'
-    )
-  fi
+# Use remote version of branch by default. This way we can compare local branch against latest
+# pushed changes.
+base_revision='@{upstream}'
 
-  git diff --name-only $base_revision..HEAD | sort
-}
+if [ ! -z $(detect_force_push) ]; then
+  # If force push is needed, we can't compare local changes against upstream as it is out of sync.
+  # In that case, let's guess what was the base for local branch. Force push is needed mostly 
+  # after rebase to the base branch, so we can assume that the both branches are synced with each 
+  # other and the diff will yield the minimum number of files changed.
+  base_revision=$(git show-branch \
+    | sed "s/].*//" \
+    | grep "\*" \
+    | grep -v "$(git branch --show-current)" \
+    | head -n1 \
+    | sed "s/^.*\[//" \
+    | sed 's/[\\^~].*//'
+  )
+fi
 
-# Query commit hash for merge commits and convert them into unique changed files.
-function get_merge_diff() {
-  git log --merges --first-parent --format='%H' \
-  | _xargs git show --first-parent --name-only --format='' \
+git log --no-merges --first-parent --format='%H' $base_revision..HEAD \
+  | _xargs git show --name-only --format='' \
   | sort \
   | uniq
-}
-
-local_diff=$(get_local_branch_diff)
-
-merge_diff=$(get_merge_diff)
-
-if [ ! -z "$merge_diff" ]; then
-  # If there are any files added to local branch during merge with base branch, let's remove them
-  # from the final output.
-  difference=$(_comm -23 <(printf "%s\n" "${local_diff[@]}" | sort) <(printf "%s\n" "${merge_diff[@]}"))
-
-  print_files "$difference"
-else
-  print_files "$local_diff"
-fi
