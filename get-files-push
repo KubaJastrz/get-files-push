@@ -48,15 +48,11 @@ base_revision='@{upstream}'
 
 if [[ ! -z $(detect_upstream_unavailable) ]] || [[ ! -z $(detect_force_push) ]]; then
   # If force push is needed, we can't compare local changes against upstream as it is out of sync.
-  # In that case, let's guess what was the base for local branch. Force push is needed mostly 
-  # after rebase to the base branch, so we can assume that the both branches are synced with each 
-  # other and the diff will yield the minimum number of files changed.
-  base_revision=$(git show-branch \
-    | grep "\*" \
-    | grep -v "$(git branch --show-current)" \
-    | head -n1 \
-    | sed 's/.*\[\(.*\)\].*/\1/; s/[\^~].*//'
-  )
+  # Force push is needed mostly after rebase to the base branch, so we can assume that the both 
+  # branches are synced with each # other and the diff will yield the minimum number of files
+  # changed.
+  # NOTE: it doesn't work for nested branches (for dev->one->two it will report changes from one AND two)
+  base_revision='dev'
 
   if [[ ! -z $(detect_upstream_unavailable) ]]; then
     base_revision=$(git merge-base --fork-point $base_revision)
