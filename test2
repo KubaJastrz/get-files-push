@@ -28,9 +28,10 @@ merge() {
 
 reset_tests() {
   checkout master
-  n git branch -D dev feature old || true
+  n git branch -D dev feature fix old || true
   n git push testing --delete dev feature old || true
   n git push testing --delete feature || true
+  n git push testing --delete fix || true
   n git push testing --delete old || true
 
   n git checkout -b dev
@@ -53,6 +54,11 @@ make_old() {
 make_feature() {
   n git branch feature
   checkout feature
+}
+
+make_fix() {
+  n git branch fix
+  checkout fix
 }
 
 run_test() {

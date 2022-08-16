@@ -40,12 +40,6 @@ function detect_force_push() {
   return 1
 }
 
-function detect_merge_commit() {
-  if [[ "$(git show -s --pretty='%p' $1 2>/dev/null | wc -w)" -eq 2 ]]; then
-    echo 'merge commit'
-  fi
-}
-
 
 # Use dev branch by default. Note that it doesn't work for nested branches, as for dev->one->two
 # it will report changes from one AND two.
