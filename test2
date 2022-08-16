@@ -86,22 +86,27 @@ echo
 
 # =================================
 #
-#     (dev)     --(A)
-#                   \
-#     (feature)      E
+#     (dev)     --(A)                 --(A)
+#                   \           ->        \
+#     (feature)     (E)-(F)               (E)
 #
 echo 
-echo TEST 1 - feature branch is ahead of dev
-echo x/feature-e
+echo TEST 17 - feature branch has removed commit from remote
+echo -
 echo 
 
 reset_tests
 make_feature
 make_file e
+make_file f
+push
+n git reset --hard HEAD~1
+push -f
 
-echo RESULT 1
+echo RESULT 17
 run_test
 echo
+
 
 
 

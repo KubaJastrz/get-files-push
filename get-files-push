@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Attributions:
+# - how to get commits only for specific branch https://stackoverflow.com/q/14848274/6244924
 # - how to detect if force-push is needed  https://stackoverflow.com/a/12258773/6244924
 # - how to ignore xargs with empty stdout  https://stackoverflow.com/a/8296746/6244924
 # - how to list only merge commits  https://stackoverflow.com/a/25986615/6244924
@@ -10,55 +11,31 @@
 # - how to trim whitespace for each line  https://unix.stackexchange.com/a/205854
 #
 
-# We need xargs to run only if sdout is not empty
-function _xargs() {
-  if [[ $OSTYPE == 'darwin'* ]]; then
-    xargs $@
-  else 
-    xargs --no-run-if-empty $@
-  fi
-}
 
 # Checks if working branch has a set upstream reference. It is false for first-time push.
 function detect_upstream_available() {
   git rev-parse @{upstream} >/dev/null 2>&1
 }
 
-# Checks if force-push is needed by comparing working branch and upstream.
-# Source: https://stackoverflow.com/a/12258773/6244924
-function detect_force_push() {
-  if detect_upstream_available; then
-    local local_commit=$(git rev-parse HEAD)
-    local upstream_commit=$(git rev-parse @{upstream})
-
-    # If force-push needed, prints a list of commits present in upstream but missing in local branch.
-    # Otherwise, prints nothing.
-    test ! -z "$(git rev-list $upstream_commit ^$local_commit)"
-    return $?
-  fi
-
-  return 1
+# Prints unique files for specified commit hashes
+function print_files() {
+  git show --name-only --format='' $@ | sort | uniq
 }
 
-
-# Use dev branch by default. Note that it doesn't work for nested branches, as for dev->one->two
-# it will report changes from one AND two.
-base_revision='dev'
+working_branch=$(git branch --show-current)
+diff="$working_branch"
 
 if detect_upstream_available; then
   # Use remote revision for working branch if available. This way we can compare against latest
-  # pushed changes.
-  base_revision='@{upstream}'
+  # pushed changes only.
+  diff="@{upstream}..$working_branch"
 fi
 
-if [ "$base_revision" = '@{upstream}' ] && detect_force_push; then
-  # If force push is needed, we can't compare local changes against upstream as it is out of sync.
-  # Force push is needed mostly after rebase to the base branch, so we can assume that the both 
-  # branches are synced with each other and the diff will yield the minimum number of files changed.
-  base_revision='dev'
-fi
+# Commits unique to working branch (excluding merge commits)
+commits=$(git log --no-merges --first-parent --format='%H' $diff \
+  --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v "refs/heads/$working_branch")
+)
 
-git log --no-merges --first-parent --format='%H' $base_revision..HEAD \
-  | _xargs git show --name-only --format='' \
-  | sort \
-  | uniq
+if [ ! -z "$commits" ]; then
+  print_files $commits
+fi
