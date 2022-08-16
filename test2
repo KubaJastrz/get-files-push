@@ -80,28 +80,20 @@ echo
 
 # =================================
 #
-#     (dev)     --(A)-(B)-(C)               --(A)-(B)-(C)
-#                   \     / \                   \     / \
-#     (feature)      \   /  (E)       ->         \   /   F
-#                     \ /                         \ /
-#     (old)            Z                           Z
+#     (dev)     --(A)
+#                   \
+#     (feature)      E
 #
 echo 
-echo TEST 18 - feature branch needs a force push with dev after merge
-echo x/feature-f
+echo TEST 1 - feature branch is ahead of dev
+echo x/feature-e
 echo 
 
 reset_tests
-make_old
-push
-n git checkout HEAD~1
 make_feature
 make_file e
-push
-n git reset --hard HEAD~1
-make_file f
 
-echo RESULT 18
+echo RESULT 1
 run_test
 echo
 

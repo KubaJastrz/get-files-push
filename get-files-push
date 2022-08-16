@@ -19,20 +19,25 @@ function _xargs() {
   fi
 }
 
-function detect_upstream_unavailable() {
-  git rev-parse @{upstream} >/dev/null 2>&1 || echo 'upstream unavailable'
+# Checks if working branch has a set upstream reference. It is false for first-time push.
+function detect_upstream_available() {
+  git rev-parse @{upstream} >/dev/null 2>&1
 }
 
-# Checks if force-push is needed by comparing upstream and HEAD.
-# If true, prints a list of commits present in upstream but missing in local branch.
-# Otherwise, prints nothing.
-#
+# Checks if force-push is needed by comparing working branch and upstream.
 # Source: https://stackoverflow.com/a/12258773/6244924
 function detect_force_push() {
-  local local_commit=$(git rev-parse HEAD)
-  local upstream_commit=$(git rev-parse @{upstream})
+  if detect_upstream_available; then
+    local local_commit=$(git rev-parse HEAD)
+    local upstream_commit=$(git rev-parse @{upstream})
 
-  git rev-list $upstream_commit ^$local_commit
+    # If force-push needed, prints a list of commits present in upstream but missing in local branch.
+    # Otherwise, prints nothing.
+    test ! -z "$(git rev-list $upstream_commit ^$local_commit)"
+    return $?
+  fi
+
+  return 1
 }
 
 function detect_merge_commit() {
@@ -42,23 +47,21 @@ function detect_merge_commit() {
 }
 
 
-# Use remote version of branch by default. This way we can compare local branch against latest
-# pushed changes.
-base_revision='@{upstream}'
+# Use dev branch by default. Note that it doesn't work for nested branches, as for dev->one->two
+# it will report changes from one AND two.
+base_revision='dev'
 
-if [[ ! -z $(detect_upstream_unavailable) ]] || [[ ! -z $(detect_force_push) ]]; then
+if detect_upstream_available; then
+  # Use remote revision for working branch if available. This way we can compare against latest
+  # pushed changes.
+  base_revision='@{upstream}'
+fi
+
+if [ "$base_revision" = '@{upstream}' ] && detect_force_push; then
   # If force push is needed, we can't compare local changes against upstream as it is out of sync.
   # Force push is needed mostly after rebase to the base branch, so we can assume that the both 
-  # branches are synced with each # other and the diff will yield the minimum number of files
-  # changed.
-  # NOTE: it doesn't work for nested branches (for dev->one->two it will report changes from one AND two)
+  # branches are synced with each other and the diff will yield the minimum number of files changed.
   base_revision='dev'
-
-  if [[ ! -z $(detect_upstream_unavailable) ]]; then
-    base_revision=$(git merge-base --fork-point $base_revision)
-  else
-    base_revision=$(git rev-parse $base_revision)
-  fi
 fi
 
 git log --no-merges --first-parent --format='%H' $base_revision..HEAD \
