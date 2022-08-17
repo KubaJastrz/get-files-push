@@ -86,24 +86,25 @@ echo
 
 # =================================
 #
-#     (dev)     --(A)                 --(A)
-#                   \           ->        \
-#     (feature)     (E)-(F)               (E)
+#     (dev)     --(A)-(B)          --(A)-(B)
+#                   \        ->            \
+#     (feature)     (E)                     E
 #
 echo 
-echo TEST 17 - feature branch has removed commit from remote
-echo -
+echo TEST 15 - feature branch is out of sync with remote
+echo x/feature-e
 echo 
 
 reset_tests
+make_file b
+push
+n git checkout HEAD~1
 make_feature
 make_file e
-make_file f
 push
-n git reset --hard HEAD~1
-push -f
+n git rebase dev
 
-echo RESULT 17
+echo RESULT 15
 run_test
 echo
 

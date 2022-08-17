@@ -596,12 +596,36 @@ echo
 #
 #     (dev)     --(A)
 #                   \
+#     (feature)      E
+#                     \
+#     (fix)            J
+#
+echo 
+echo TEST 22 - feature branch is a base for fix
+echo x/feature-e
+echo 
+
+reset_tests
+make_feature
+make_file e
+make_fix
+make_file j
+checkout feature
+
+echo RESULT 22
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)
+#                   \
 #     (feature)     (E)
 #                     \
 #     (fix)            J
 #
 echo 
-echo TEST 21 - fix branch is based on remote feature
+echo TEST 23 - fix branch is based on remote feature
 echo x/fix-j
 echo 
 
@@ -612,7 +636,33 @@ push
 make_fix
 make_file j
 
-echo RESULT 21
+echo RESULT 23
+run_test
+echo
+
+# =================================
+#
+#     (dev)     --(A)
+#                   \
+#     (feature)     (E)--F
+#                     \
+#     (fix)            J
+#
+echo 
+echo TEST 24 - feature branch is ahead of fix
+echo x/feature-f
+echo 
+
+reset_tests
+make_feature
+make_file e
+push
+make_fix
+make_file j
+checkout feature
+make_file f
+
+echo RESULT 24
 run_test
 echo
 

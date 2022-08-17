@@ -24,16 +24,17 @@ print_files() {
 
 
 working_branch=$(git branch --show-current)
+# All commmits in the working_branch up to the initial commit.
 diff="$working_branch"
 
 if detect_upstream_available; then
-  # Use remote revision for working branch if available. This way we can compare against latest
-  # pushed changes only.
+  # All commits reachable by working_branch that are also unreachable by @{upstream}.
+  # This way we can skip commits that are already pushed to remote.
   diff="@{upstream}..$working_branch"
 fi
 
-# Commits unique to working branch (excluding merge commits)
-commits=$(git log --no-merges --first-parent --format='%H' $diff \
+# Commits that are reachable ONLY from the working_branch (excluding merge commits)
+commits=$(git log --no-merges --format='%H' $diff \
   --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v "refs/heads/$working_branch")
 )
 
