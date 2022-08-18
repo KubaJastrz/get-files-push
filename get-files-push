@@ -22,21 +22,29 @@ print_files() {
   git show --name-only --format='' $@ | sort | uniq
 }
 
+default_remote='testing'
+
+log_commits_without_dev() {
+  #   --no-merges     = exclude merge commits
+  #   --first-parent  = exclude commits added to working_branch by merge commits
+  #   --format='%H'   = print only the commit hash
+  #   --not $(...)    = exclude commits from branches that are not on remote dev
+  git log --no-merges --first-parent --format='%H' "$1" --not refs/remotes/$default_remote/dev
+}
 
 working_branch=$(git branch --show-current)
-# All commmits in the working_branch up to the initial commit.
-diff="$working_branch"
+commits=""
 
 if detect_upstream_available; then
-  # All commits reachable by working_branch that are also unreachable by @{upstream}.
-  # This way we can skip commits that are already pushed to remote.
-  diff="@{upstream}..$working_branch"
+  # @{upstream}..$working_branch 
+  #   All commits reachable by working_branch that are also unreachable by @{upstream}.
+  #   This way we can skip commits that are already pushed to remote.
+  commits=$(log_commits_without_dev "@{upstream}..$working_branch")
+else
+  # $working_branch
+  #   All commmits in the working_branch up to the initial commit.
+  commits=$(log_commits_without_dev "$working_branch")
 fi
-
-# Commits that are reachable ONLY from the working_branch (excluding merge commits)
-commits=$(git log --no-merges --format='%H' $diff \
-  --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v "refs/heads/$working_branch")
-)
 
 if [ ! -z "$commits" ]; then
   print_files $commits
