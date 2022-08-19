@@ -29,7 +29,7 @@ log_commits_without_dev() {
   #   --first-parent  = exclude commits added to working_branch by merge commits
   #   --format='%H'   = print only the commit hash
   #   --not $(...)    = exclude commits from branches that are not on remote dev
-  git log --no-merges --first-parent --format='%H' "$1" --not refs/remotes/$default_remote/dev
+  git log --no-merges --first-parent --format='%H' "$1" --not "refs/remotes/$default_remote/dev"
 }
 
 working_branch=$(git branch --show-current)
