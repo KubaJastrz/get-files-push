@@ -9,9 +9,9 @@ n() {
 
 make_file() {
   local branch=$(git branch --show-current)
-  touch x/$branch-$1
+  touch "x/$branch-$1"
   git add x
-  n git commit -m $1
+  git commit -m "$1" &>/dev/null
 }
 
 checkout() {
@@ -90,13 +90,14 @@ echo
 
 # =================================
 #
-#     (dev)     --(A)-(B)          --(A)-(B)
-#                   \        ->            \
-#     (feature)     (E)                     E
+#     (dev)     --(A)-(B)
+#                   \   \
+#     (feature)      E--{G}--H
 #
 echo 
-echo TEST 15 - feature branch is out of sync with remote
-echo x/feature-e
+echo TEST 25 - escaped files
+expect 'x/feature-e 1'
+expect 'x/feature-h 2'
 echo 
 
 reset_tests
@@ -104,11 +105,11 @@ make_file b
 push
 n git checkout HEAD~1
 make_feature
-make_file e
-push
-n git rebase dev
+make_file 'e 1'
+merge dev g
+make_file 'h 2'
 
-echo RESULT 15
+echo RESULT 25
 run_test
 echo
 
@@ -119,4 +120,4 @@ echo
 echo
 
 
-# n git checkout master
+n git checkout master
