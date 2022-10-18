@@ -62,7 +62,7 @@ make_fix() {
 }
 
 expect() {
-  echo "$1" | sed "s/^/'/;s/$/'/"
+  echo "$1"
 }
 
 run_test() {
