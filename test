@@ -61,6 +61,10 @@ make_fix() {
   checkout fix
 }
 
+expect() {
+  echo "$1" | sed "s/^/'/;s/$/'/"
+}
+
 run_test() {
   local result=$(./get-files-push)
   if [ -z "$result" ]; then
@@ -90,7 +94,7 @@ echo
 #
 echo 
 echo TEST 1 - feature branch is ahead of dev
-echo x/feature-e
+expect x/feature-e
 echo 
 
 reset_tests
@@ -109,7 +113,7 @@ echo
 #
 echo 
 echo TEST 2 - feature branch out of sync with dev
-echo x/feature-e
+expect x/feature-e
 echo 
 
 reset_tests
@@ -130,7 +134,7 @@ echo
 #
 echo 
 echo TEST 3 - feature branch is synced with dev
-echo x/feature-e
+expect x/feature-e
 echo 
 
 reset_tests
@@ -177,8 +181,8 @@ echo
 #
 echo 
 echo TEST 5 - feature branch is ahead of dev after sync
-echo x/feature-e
-echo x/feature-h
+expect x/feature-e
+expect x/feature-h
 echo 
 
 reset_tests
@@ -202,7 +206,7 @@ echo
 #
 echo 
 echo TEST 6 - feature branch is partially remote and ahead of dev after sync
-echo x/feature-h
+expect x/feature-h
 echo 
 
 reset_tests
@@ -227,7 +231,7 @@ echo
 #
 echo 
 echo TEST 7 - feature branch is partially remote
-echo x/feature-f
+expect x/feature-f
 echo 
 
 reset_tests
@@ -248,7 +252,7 @@ echo
 #
 echo 
 echo TEST 8 - feature branch is partially remote and behind remote dev
-echo x/feature-f
+expect x/feature-f
 echo 
 
 reset_tests
@@ -272,7 +276,7 @@ echo
 #
 echo 
 echo TEST 9 - feature branch is partially remote and synced with remote dev
-echo x/feature-f
+expect x/feature-f
 echo 
 
 reset_tests
@@ -297,7 +301,7 @@ echo
 #
 echo 
 echo TEST 10 - feature branch is partially remote after sync
-echo x/feature-h
+expect x/feature-h
 echo 
 
 reset_tests
@@ -323,8 +327,8 @@ echo
 #
 echo 
 echo TEST 11 - feature branch contains files from dev
-echo x/feature-e
-echo x/shared
+expect x/feature-e
+expect x/shared
 echo 
 
 reset_tests
@@ -353,7 +357,7 @@ echo
 #
 echo 
 echo TEST 12 - feature branch is created from dev with merges
-echo x/feature-e
+expect x/feature-e
 echo 
 
 reset_tests
@@ -375,7 +379,7 @@ echo
 #
 echo 
 echo TEST 13 - feature branch is created from dev with merges and behind dev
-echo x/feature-e
+expect x/feature-e
 echo 
 
 reset_tests
@@ -400,7 +404,7 @@ echo
 #
 echo 
 echo TEST 14 - feature branch is created from dev with merges and synced with dev
-echo x/feature-e
+expect x/feature-e
 echo 
 
 reset_tests
@@ -424,7 +428,7 @@ echo
 #
 echo 
 echo TEST 15 - feature branch is out of sync with remote
-echo x/feature-e
+expect x/feature-e
 echo 
 
 reset_tests
@@ -448,7 +452,7 @@ echo
 #
 echo 
 echo TEST 16 - feature branch is out of sync with remote with different changes
-echo x/feature-f
+expect x/feature-f
 echo 
 
 reset_tests
@@ -495,7 +499,7 @@ echo
 #
 echo 
 echo TEST 18 - feature branch needs a force push with dev after merge
-echo x/feature-f
+expect x/feature-f
 echo 
 
 reset_tests
@@ -522,7 +526,7 @@ echo
 #
 echo 
 echo TEST 19 - feature branch needs a force push with dev after merge and deleted old
-echo x/feature-f
+expect x/feature-f
 echo 
 
 reset_tests
@@ -551,7 +555,7 @@ echo
 #
 echo 
 echo TEST 20 - feature branch needs a force push with dev after merge while behind dev
-echo x/feature-f
+expect x/feature-f
 echo 
 
 reset_tests
@@ -579,7 +583,7 @@ echo
 #
 echo 
 echo TEST 21 - fix branch is based on feature
-echo x/fix-j
+expect x/fix-j
 echo 
 
 reset_tests
@@ -602,7 +606,7 @@ echo
 #
 echo 
 echo TEST 22 - feature branch is a base for fix
-echo x/feature-e
+expect x/feature-e
 echo 
 
 reset_tests
@@ -626,7 +630,7 @@ echo
 #
 echo 
 echo TEST 23 - fix branch is based on remote feature
-echo x/fix-j
+expect x/fix-j
 echo 
 
 reset_tests
@@ -650,7 +654,7 @@ echo
 #
 echo 
 echo TEST 24 - feature branch is ahead of fix
-echo x/feature-f
+expect x/feature-f
 echo 
 
 reset_tests

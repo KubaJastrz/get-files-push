@@ -61,6 +61,10 @@ make_fix() {
   checkout fix
 }
 
+expect() {
+  echo "$1" | sed "s/^/'/;s/$/'/"
+}
+
 run_test() {
   local result=$(./get-files-push)
   if [ -z "$result" ]; then
